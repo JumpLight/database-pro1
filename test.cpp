@@ -10,7 +10,7 @@
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
-int n = 600, d = 50;
+int n = 60000, d = 50;
 int qn = 1000;
 #endif
 
@@ -20,7 +20,7 @@ int n = 17770, d = 50;
 int qn = 1000;
 #endif
 
-int main() {  // mainº¯Êı²»ÔÊĞíĞŞ¸Ä 
+int main() {  // mainå‡½æ•°ä¸å…è®¸ä¿®æ”¹ 
 	char data_path[L], query_path[L];
 	char index_path[L], output_path1[L], output_path2[L];
 	float** data = NULL;
@@ -32,11 +32,11 @@ int main() {  // mainº¯Êı²»ÔÊĞíĞŞ¸Ä
 	sprintf(output_path1, "%s/dst/KDTree_answer.txt", dataset);
 	sprintf(output_path2, "%s/dst/RPTree_answer.txt", dataset);
 
-	if (!read_data(n, d, data, data_path)) {  //¶ÁÈëÊı¾İ 
+	if (!read_data(n, d, data, data_path)) {  //è¯»å…¥æ•°æ® 
 		return 1;
 	}
 
-	KDTree kd_Tree1;  //K-DÊ÷µÄ¼ì²â 
+	KDTree kd_Tree1;  //K-Dæ ‘çš„æ£€æµ‹ 
 	kd_Tree1.buildTree(n, d, data);
 	kd_Tree1.storeTree(index_path);
 
@@ -55,7 +55,7 @@ int main() {  // mainº¯Êı²»ÔÊĞíĞŞ¸Ä
 	}
 	fclose(fout);
 	
-	RPTree rp_Tree1;  //RPÊ÷µÄ¼ì²â 
+	RPTree rp_Tree1;  //RPæ ‘çš„æ£€æµ‹ 
 	rp_Tree1.buildTree(n, d, data);
 	rp_Tree1.storeTree(index_path);
 
