@@ -1,30 +1,81 @@
 #ifndef __KD_TREE_H
 #define __KD_TREE_H
 
-/*ÕâÀï¿ÉÒÔÌí¼ÓÐèÒªµÄ´úÂë*/ 
+#include<iostream>
+#include<vector>
+#include<queue>
+#include<stack>
+#include <climits> 
+#include <map>
+#include <fstream>
+using namespace std;
+/*è¿™é‡Œå¯ä»¥æ·»åŠ éœ€è¦çš„ä»£ç */
 
 class KDTree {
 public:
+	struct Node{
+		float mid;
+		float dimen;
+		Node* left;
+		Node* right;
+		vector<float> value;
+		Node(float m, float d, vector<float> v, Node* l=NULL, Node* r=NULL)
+			:mid(m), dimen(d), left(l), right(r), value(v){}
+		Node(float m, float d, float v[], Node* l=NULL, Node* r=NULL)
+			:mid(m), dimen(d), left(l), right(r){
+			for(int i=0; i<51; ++i)
+				value.push_back(v[i]);
+		}
+	};
+	
+	struct fileNode{
+		float mid;
+		float dimen;
+		float value[51];
+		int pos;
+		fileNode(float m, float d, vector<float> v, int p):mid(m), dimen(d), pos(p){
+			for(int i=0; i<51; ++i)
+				value[i] = v[i];
+		}
+		fileNode(){
+		}
+	};
+	
+	vector<vector<float> > matrix;
+	Node* root;
+	float dist;
+	stack<Node*> searchPath;
+	int count;
+	FILE *filePtr;
+	
 	KDTree();
 	~KDTree();
 
-	bool buildTree(  //½¨Ê÷£¨ÀûÓÃ·½²îÑ¡È¡Î¬¶È·¨£© 
+	bool buildTree(  //å»ºæ ‘ï¼ˆåˆ©ç”¨æ–¹å·®é€‰å–ç»´åº¦æ³•ï¼‰ 
 		int n,
 		int d,
 		float** data);
-		
-	int search(    //²éÑ¯£¨ÒªÓÐ»ØËÝ¹ý³Ì£© 
+
+	void _buildTree(int d, Node* &nodes, vector<vector<float> > list);
+
+	int search(    //æŸ¥è¯¢ï¼ˆè¦æœ‰å›žæº¯è¿‡ç¨‹ï¼‰ 
 		int d,
 		float* query);
 
-	bool storeTree(    //Ð´µ½Íâ´æ (¶þ½øÖÆÎÄ¼þ£© 
-		const char* index_path);
+	int _search(vector<float> query, Node* tree, int d);
 
-	bool restoreTree(   //¶Á½øÄÚ´æ 
+	bool storeTree(    //å†™åˆ°å¤–å­˜ (äºŒè¿›åˆ¶æ–‡ä»¶ï¼‰ 
 		const char* index_path);
 		
-	/*¿ÉÒÔÌí¼ÓÐèÒªµÄ´úÂë*/ 
-	
+	void _storeTree(const Node *ptr, int pos);
+
+	bool restoreTree(   //è¯»è¿›å†…å­˜ 
+		const char* index_path);
+
+	/*å¯ä»¥æ·»åŠ éœ€è¦çš„ä»£ç */
+	int getDimen(vector<vector<float> > v, int n);
+
+	float getMid(Node* &nodes, int dimen, vector<vector<float> > list, vector<vector<float> > &leftlist, vector<vector<float> > &rightlist, int d);
 };
 
 #endif
