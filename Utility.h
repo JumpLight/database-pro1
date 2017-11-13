@@ -1,13 +1,15 @@
 #ifndef __UTILITY_H
 #define __UTILITY_H
 
+#include <iostream>
+#include <vector>
 #include <cstdio>
 #include <cmath>
 #include <algorithm>
-
+using namespace std;
 #define L 256
-	
-bool read_data(  // ¶ÁÈ¡Êı¾İ×¨ÓÃº¯Êı£¬Í¬Ñ§ÃÇ²»ÒªĞŞ¸Ä 
+
+static bool read_data(  // è¯»å–æ•°æ®ä¸“ç”¨å‡½æ•°ï¼ŒåŒå­¦ä»¬ä¸è¦ä¿®æ”¹ 
 	int n,
 	int d,
 	float** &data,
@@ -22,9 +24,9 @@ bool read_data(  // ¶ÁÈ¡Êı¾İ×¨ÓÃº¯Êı£¬Í¬Ñ§ÃÇ²»ÒªĞŞ¸Ä
 	int id;
 	data = new float*[n];
 	for (int i = 0; i < n; i++) {
-		data[i] = new float[d+1];
-		fscanf(fin, "%d", &id);							
-		data[i][d] = id;   // dºÅÎ»ÖÃÓÃÀ´´æ´¢´ËÊı¾İµãÔÚÔ´ÎÄ¼şÖĞµÄ±àºÅ 
+		data[i] = new float[d + 1];
+		fscanf(fin, "%d", &id);
+		data[i][d] = id;   // då·ä½ç½®ç”¨æ¥å­˜å‚¨æ­¤æ•°æ®ç‚¹åœ¨æºæ–‡ä»¶ä¸­çš„ç¼–å· 
 		for (int j = 0; j < d; j++) {
 			fscanf(fin, "%f", &data[i][j]);
 		}
@@ -36,9 +38,15 @@ bool read_data(  // ¶ÁÈ¡Êı¾İ×¨ÓÃº¯Êı£¬Í¬Ñ§ÃÇ²»ÒªĞŞ¸Ä
 	return true;
 }
 
-
-/*
-	ÕâÀï¿ÉÒÔÌí¼Ó´úÂë 
-*/
-
+static float getDistance(vector<float> query, vector<float> node){
+	if (query.size() != node.size()){
+		cout << "Dimension not match" << endl;
+		exit(1);
+	}
+	float dis = 0;
+	for (int i = 0; i < node.size()-1; i++){
+		dis += (query[i] - node[i])*(query[i] - node[i]);
+	}
+	return sqrt(dis);
+}
 #endif
