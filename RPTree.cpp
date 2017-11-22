@@ -1,29 +1,13 @@
 #include "RPTree.h"
 #include "Utility.h"
-#include<cstdlib>
-#include<ctime>
-#include<cmath>
-using namespace std;
-
-//定义叶子结点储存数据个数和常数C
-#define Minsize 20
-#define c 5
 
 /*在这里实现RP树的各个函数*/
 
 RPTree::RPTree(){
-	root = NULL;
+    root = NULL;
 }
 
 RPTree::~RPTree(){}
-
-float Distance(vector<float> query, vector<float> node, int d){
-    float dis = 0;
-	for (int i = 0; i < d; i++){
-		dis += (query[i] - node[i])*(query[i] - node[i]);
-	}
-	return sqrt(dis);
-}
 
 float mul(vector<float>& a, vector <float>& b, int d){
     int s = a.size();
@@ -36,17 +20,17 @@ float mul(vector<float>& a, vector <float>& b, int d){
 
 vector<float> get_ramdon_v(int d){
     srand((unsigned)time(NULL));
-	vector<float> r;
-	float sum = 0;
-	for(int i = 0; i < d; i ++){
-		r.push_back((float)((rand() % 101) - 50));
-		sum += (r[i] * r[i]);
-	}
-	float v = sqrt(sum);
-	for(int i = 0; i < d; i ++){
-		r[i] = r[i] / v;
-	}
-	return r;
+    vector<float> r;
+    float sum = 0;
+    for(int i = 0; i < d; i ++){
+        r.push_back((float)((rand() % 101) - 50));
+        sum += (r[i] * r[i]);
+    }
+    float v = sqrt(sum);
+    for(int i = 0; i < d; i ++){
+        r[i] = r[i] / v;
+    }
+    return r;
 }
 
 bool cmp(pair<float,int> p1, pair<float,int> p2){
@@ -54,13 +38,86 @@ bool cmp(pair<float,int> p1, pair<float,int> p2){
     else return false;
 }
 
+char storeTree_tree[L];
+char storeTree_data[L];
+void RPTree::_storeTree(const Node *ptr, int pos){
+	if(ptr->is_leaf){
+		fileNode node_2(ptr->store_data, ptr->data_size);
+		fwrite(&node_2, sizeof(node_2), 1, filePtr2);
+		return;
+	}
+		
+	fileNode node(ptr->median, ptr->rule, ptr->is_buttom, ptr->left_page, ptr->right_page, pos, ptr->dv);
+	fwrite(&node, sizeof(node), 1, filePtr);
+
+	_storeTree(ptr->left, pos*2);
+	_storeTree(ptr->right, pos*2+1);
+}
+
+bool RPTree::storeTree(const char* index_path){
+	sprintf(storeTree_tree, "%s/storeTree_RPtree.txt", index_path);
+	sprintf(storeTree_data, "%s/storeTree_RPdata.txt", index_path);
+	filePtr = fopen(storeTree_tree, "wb");
+	filePtr2 = fopen(storeTree_data, "wb");
+	_storeTree(root, 1);
+	fclose(filePtr);
+	fclose(filePtr2);
+	return true;
+}
+
+bool RPTree::restoreTree(const char* index_path){
+	map<int, Node*> nodeMap;
+	Node *ptr;
+	fileNode fNode;
+	sprintf(storeTree_tree, "%s/storeTree_RPtree.txt", index_path);
+	sprintf(storeTree_data, "%s/storeTree_RPdata.txt", index_path);
+	filePtr = fopen(storeTree_tree, "rb");
+	while(fread(&fNode, sizeof(fNode), (size_t)1, filePtr)>0){
+		ptr = new Node(fNode.mid, fNode.rule, fNode.is_buttom, fNode.left_page, fNode.right_page, fNode.value);
+		nodeMap.insert(map<int, Node*>::value_type(fNode.pos, ptr));
+	}
+
+	map<int, Node*>::iterator it, temp_it;
+
+	for(it=nodeMap.begin(); it!=nodeMap.end(); ++it){
+		temp_it = nodeMap.find(2*(it->first));
+		if(temp_it != nodeMap.end())
+			it->second->left = temp_it->second;
+		else
+			it->second->left = NULL;
+
+		temp_it = nodeMap.find(2*(it->first)+1);
+		if(temp_it != nodeMap.end())
+			it->second->right = temp_it->second;
+		else
+			it->second->right = NULL;
+	}
+	
+	temp_it = nodeMap.find(1); 
+
+    if (temp_it != nodeMap.end()) {  
+        root = temp_it->second;  
+    }  
+
+    fclose(filePtr);
+    return true;
+}
 
 int uuu = 0;
 void RPTree::build_tree(int n, int d, vector<vector<float> > &block_data, Node* &node){
     //叶子节点
 
     if(n < Minsize){
-        node = new Node(true,block_data);
+    	vector<vector<float> >  leaf_data(Minsize);
+    	vector<float> fill(51,0);
+    	for(int i=0; i<Minsize; i++){
+    		if(i < n)
+				leaf_data[i] = block_data[i];//实际数据 
+    		else 
+				leaf_data[i] = fill;//填充点
+		}
+        node = new Node(true, block_data, n);
+        //cout << n << "N!!! \n";
         return;
     }
 
@@ -84,8 +141,8 @@ void RPTree::build_tree(int n, int d, vector<vector<float> > &block_data, Node* 
     ava_dist = (sum_dist * 2) / n;
 
     for(int i = 0; i < n; i ++){
-    	max_dist = max(max_dist,Distance(block_data[i], mean_S, d));
-	}
+        max_dist = max(max_dist,Distance(block_data[i], mean_S, d));
+    }
 
     //Rule
     //随机投影
@@ -103,44 +160,6 @@ void RPTree::build_tree(int n, int d, vector<vector<float> > &block_data, Node* 
         if(n % 2 == 1)nice_cut = projection[n / 2].first;
         else nice_cut = (projection[n / 2].first + projection[(n / 2) - 1].first) / 2;
         
-        /*
-        //根据映射长度排序
-        sort(projection.begin(),projection.end(),cmp);
-        //找到最小方差和对应的index
-        int min_var_sum = INT_MAX;
-        int min_index = -1;
-        vector<float> u_sum(n);
-        vector<float> u1(n-1);
-        vector<float> u2(n-1);
-        u_sum[0] = projection[0].first;
-        for(int i = 1; i < n; i ++){
-        	u_sum[i] = u_sum[i - 1] + projection[i].first;
-		}
-		for(int i = 0; i < n - 1; i ++){
-        	u1[i] = u_sum[i] / (i + 1);
-			u2[i] = (u_sum[n - 1] - u_sum[i + 1]) /(n - (i + 1));
-		}
-		
-        //原来的方法太慢，改成了动态规划
-        for(int i = 0; i < n - 1; i ++){
-            float l_variance = 0;   //左方差
-            for(int j = 1; j <= i; j ++){
-                l_variance += pow(projection[j].first - u1[i], 2);
-            }
-
-            float r_variance = 0;   //右方差
-            for(int j = i + 1; j <= n - 1; j ++){
-                r_variance += pow(projection[j].first - u2[i], 2);
-            }
-
-            if((l_variance + r_variance) <= min_var_sum){
-                min_var_sum = l_variance + r_variance;
-                min_index = i;
-            }
-        }
-        float nice_cut = (projection[min_index].first + projection[min_index + 1].first) / 2;
-        */
-        
         //大于分割线划分在右子树，小于等于分割线划分在左子树
         vector<vector<float> > l_block_data,r_block_data;
         
@@ -152,14 +171,14 @@ void RPTree::build_tree(int n, int d, vector<vector<float> > &block_data, Node* 
         node = new Node(ramdon_v,nice_cut);
         build_tree(l_block_data.size(), d ,l_block_data, node->left);
         if(node->left->is_leaf){
-        	node->left_page = uuu++;
-        	node->is_buttom = true;
-		}
+            node->left_page = uuu++;
+            node->is_buttom = true;
+        }
         build_tree(r_block_data.size(), d ,r_block_data, node->right);
         if(node->right->is_leaf){
-        	node->right_page = uuu++;
-        	node->is_buttom = true;
-		}
+            node->right_page = uuu++;
+            node->is_buttom = true;
+        }
     }
     //同心圆划分
     else{
@@ -183,14 +202,14 @@ void RPTree::build_tree(int n, int d, vector<vector<float> > &block_data, Node* 
         node = new Node(median,mean_S);
         build_tree(l_block_data.size(), d ,l_block_data, node->left);
         if(node->left->is_leaf){
-        	node->left_page = uuu++;
-        	node->is_buttom = true;
-		}
+            node->left_page = uuu++;
+            node->is_buttom = true;
+        }
         build_tree(r_block_data.size(), d ,r_block_data, node->right);
         if(node->right->is_leaf){
-        	node->right_page = uuu++;
-        	node->is_buttom = true;
-		}
+            node->right_page = uuu++;
+            node->is_buttom = true;
+        }
     }
 }
 
@@ -202,7 +221,15 @@ bool RPTree::buildTree(int n, int d, float** data){
             matrix[i][j] = data[i][j];
         }
     }
+    cout << "Building RP tree..." << endl;
+	clock_t startTime, endTime;
+	startTime = clock();
+	
     build_tree(n, d, matrix, root);
+    
+    endTime = clock();
+	cout << "Build Complete" << endl;
+	cout<<"Build time: "<<(double)(endTime-startTime)/CLOCKS_PER_SEC<<"s"<<endl;
     return true;
 }
 
@@ -212,26 +239,45 @@ int RPTree::search_1(int d, Node* node, vector<float> &q){
     if(node->rule){
         vector<float> get_dv = node->dv;
         if(mul(q, get_dv, d) <= node->median){
-        	if(node->is_buttom)return node->left_page;
-        	return search_1(d, node->left, q);
-		}
+            if(node->is_buttom)return node->left_page;
+            return search_1(d, node->left, q);
+        }
         else {
-        	if(node->is_buttom)return node->right_page;
-			return search_1(d, node->right, q);
-		}
+            if(node->is_buttom)return node->right_page;
+            return search_1(d, node->right, q);
+        }
     }
     //同心圆分割
     else{
         if(Distance(q, node->dv, d) <= node->median){
-        	if(node->is_buttom)return node->left_page;
-        	return search_1(d, node->left, q);
-		}
+            if(node->is_buttom)return node->left_page;
+            return search_1(d, node->left, q);
+        }
         else{
-        	if(node->is_buttom)return node->right_page;
-        	return search_1(d, node->right, q);
-		}
+            if(node->is_buttom)return node->right_page;
+            return search_1(d, node->right, q);
+        }
     }
     
+}
+static float D = 0;
+static float totalD = 0;
+int RPTree::search_2(int pageNum, char path[], float* query){
+	fileNode fNode;
+	filePtr2 = fopen(path, "rb");
+	fseek(filePtr2, pageNum*sizeof(fNode), 0); 
+	
+	float dist=INT_MAX, ans=0;
+	fread(&fNode, sizeof(fNode), (size_t)1, filePtr2);
+	for(int i=0; i<fNode.data_size; ++i)
+		if(dist > getDist(query, fNode.data[i])){
+			dist = getDist(query, fNode.data[i]);
+			D = dist;
+			ans = fNode.data[i][50];
+		}
+	totalD += D;
+	fclose(filePtr2);
+	return ans;		
 }
 
 int RPTree::search(int d, float* query){
@@ -240,7 +286,8 @@ int RPTree::search(int d, float* query){
         q[i] = query[i];
     }
     int page = search_1(d,root,q);
+
+    int ans = search_2(page, storeTree_data, query);
     
-	//给你页号了,你要去文件里找。 
-    return page;
+    return ans;
 }
