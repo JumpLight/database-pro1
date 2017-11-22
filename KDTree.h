@@ -5,9 +5,11 @@
 #include<vector>
 #include<queue>
 #include<stack>
+#include<deque>
 #include <climits> 
 #include <map>
 #include <fstream>
+#include <time.h>
 using namespace std;
 /*这里可以添加需要的代码*/
 
@@ -45,12 +47,15 @@ public:
 	Node* root;
 	float dist;
 	stack<Node*> searchPath;
+	priority_queue<Node*> PsearchPath;
 	int count;
 	FILE *filePtr;
 	
 	KDTree();
 	~KDTree();
 
+	int countNode(Node *root);
+	
 	bool buildTree(  //建树（利用方差选取维度法） 
 		int n,
 		int d,
@@ -75,7 +80,7 @@ public:
 	/*可以添加需要的代码*/
 	int getDimen(vector<vector<float> > v, int n);
 
-	float getMid(Node* &nodes, int dimen, vector<vector<float> > list, vector<vector<float> > &leftlist, vector<vector<float> > &rightlist, int d);
+	void split(Node* &nodes, int dimen, vector<vector<float> > list, vector<vector<float> > &leftlist, vector<vector<float> > &rightlist, int d);
 };
 
 #endif
