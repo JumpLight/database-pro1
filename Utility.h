@@ -38,13 +38,31 @@ static bool read_data(  // 读取数据专用函数，同学们不要修改
 	return true;
 }
 
+/*
+这里可以添加代码
+*/
+static float getDist(float* query, float* data){
+	float tempDist=0;
+	for(int i=0; i<50; ++i)
+		tempDist += (query[i]-data[i])*(query[i]-data[i]);
+	return sqrt(tempDist);
+}
+
+static float Distance(vector<float> query, vector<float> node, int d){
+    float dis = 0;
+    for (int i = 0; i < d; i++){
+        dis += (query[i] - node[i])*(query[i] - node[i]);
+    }
+    return sqrt(dis);
+}
+
 static float getDistance(vector<float> query, vector<float> node){
 	if (query.size() != node.size()){
 		cout << "Dimension not match" << endl;
 		exit(1);
 	}
 	float dis = 0;
-	for (int i = 0; i < node.size()-1; i++){
+	for (int i = 0; i < query.size()-1; i++){
 		dis += (query[i] - node[i])*(query[i] - node[i]);
 	}
 	return sqrt(dis);
